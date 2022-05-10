@@ -1,0 +1,92 @@
+_schema-version: "3.2"
+ID: app_5_9_c
+version: 0.0.1
+modules:
+- name: app_5_9_c-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: app_5_9_c-destination-service
+    parameters:
+      content-target: true
+  - name: app_5_9_c_html_repo_host
+    parameters:
+      service-key:
+        name: app_5_9_c_html_repo_host-key
+  - name: uaa_app_5_9_c
+    parameters:
+      service-key:
+        name: uaa_app_5_9_c-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: products_app_5_9_c_html_repo_host
+          ServiceInstanceName: app_5_9_c-html5-app-host-service
+          ServiceKeyName: app_5_9_c_html_repo_host-key
+          sap.cloud.service: products
+        - Authentication: OAuth2UserTokenExchange
+          Name: products_uaa_app_5_9_c
+          ServiceInstanceName: app_5_9_c-xsuaa-service
+          ServiceKeyName: uaa_app_5_9_c-key
+          sap.cloud.service: products
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: app_5_9_c-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: app_5_9_c_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - ns59cproject159c.zip
+      name: ns59cproject159c
+      target-path: resources/
+- name: ns59cproject159c
+  type: html5
+  path: project1_5_9_c
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: app_5_9_c-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: app_5_9_c-destination-service
+    service-plan: lite
+- name: app_5_9_c_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: app_5_9_c-html5-app-host-service
+    service-plan: app-host
+- name: uaa_app_5_9_c
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: app_5_9_c-xsuaa-service
+    service-plan: application
+parameters:
+  deploy_mode: html5-repo
